@@ -1,6 +1,5 @@
 package com.eCommerceSite.WhimsyCrafts.controller;
 
-import com.cloudinary.Uploader;
 import com.eCommerceSite.WhimsyCrafts.model.Logo;
 import com.eCommerceSite.WhimsyCrafts.model.Product;
 import com.eCommerceSite.WhimsyCrafts.model.ProductType;
@@ -11,19 +10,16 @@ import com.eCommerceSite.WhimsyCrafts.repository.ProductTypeRepository;
 import com.eCommerceSite.WhimsyCrafts.repository.UserRepo;
 import com.eCommerceSite.WhimsyCrafts.security.JwtTokenProvider;
 import com.eCommerceSite.WhimsyCrafts.services.CloudinaryService;
-import jakarta.servlet.http.Part;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import java.io.IOException;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
@@ -31,10 +27,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
-import org.springframework.core.io.buffer.DataBuffer;
+import com.eCommerceSite.WhimsyCrafts.services.CartService;
 
 @RestController
 @RequestMapping("/WhimsyCrafts")
@@ -60,6 +54,9 @@ public class mainController {
 
     @Autowired
     private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private CartService cartService;
 
     @PostMapping("/SignUp")
     public ResponseEntity<?> addUser(@RequestBody User user) {
@@ -230,6 +227,66 @@ public class mainController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/addCart")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    public ResponseEntity<String> addToCart(@RequestParam("productId") String productId,
+                                            @RequestParam("quantity") int quantity) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        String response = cartService.addToCart(productId, quantity, userId);
+        if (response.equals("Product added to cart successfully.")) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(400).body(response);
+        }
+    }
+
+    @DeleteMapping("/removeCartItem")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<String> removeCartItem(@RequestParam("cartId") String cartId) {
+        try {
+            cartService.removeCartItem(cartId);
+            return ResponseEntity.ok("Cart item removed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error removing cart item: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/getTotalAmount")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<Double> getTotalAmount() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        double totalAmount = cartService.getTotalAmount(userId);
+        return ResponseEntity.ok(totalAmount);
+    }
+
+    @PostMapping("/placeOrder")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<String> placeOrder() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        cartService.placeOrder(userId);
+        return ResponseEntity.ok("Order placed successfully.");
+    }
+
+    @GetMapping("/getTotalItems")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<Integer> getTotalItems() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        int totalItems = cartService.getTotalItems(userId);
+        return ResponseEntity.ok(totalItems);
     }
 
 }
