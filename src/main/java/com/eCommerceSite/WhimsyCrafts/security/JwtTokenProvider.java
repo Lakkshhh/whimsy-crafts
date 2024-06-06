@@ -3,6 +3,7 @@ package com.eCommerceSite.WhimsyCrafts.security;
 import io.jsonwebtoken.*;
 import java.util.function.Function;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +18,9 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
-    private final String secret = "breajkblirelrbeilrebirelbrileblrelbreibreajkblirelrbeilrebirelbrileblrelbrei";
+    @Value("${jwt.secret}")
+    private String secret;
+    //private final String secret = "breajkblirelrbeilrebirelbrileblrelbreibreajkblirelrbeilrebirelbrileblrelbrei";
 
     public String generateToken(Authentication authentication) {
         Map<String, Object> claims = new HashMap<>();

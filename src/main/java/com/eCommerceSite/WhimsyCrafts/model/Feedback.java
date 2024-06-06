@@ -37,8 +37,6 @@ public class Feedback {
         this.dislikes = 0;
     }
 
-    // Getters and setters
-
     public String getId() {
         return id;
     }

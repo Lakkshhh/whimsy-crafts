@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/feedback")
+@RequestMapping("/WhimsyCrafts/feedback")
 public class FeedbackController {
 
     @Autowired
@@ -46,7 +46,6 @@ public class FeedbackController {
 
         feedbackRepository.save(feedback);
 
-        // Prepare the response
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("message", "Feedback submitted successfully");
         response.put("productId", productId);
