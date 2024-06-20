@@ -28,7 +28,7 @@ public class CartController {
         if (response.equals("Product added to cart successfully.")) {
             return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(400).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
@@ -59,8 +59,12 @@ public class CartController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
 
-        cartService.placeOrder(userId);
-        return ResponseEntity.ok("Order placed successfully.");
+        try {
+            cartService.placeOrder(userId);
+            return ResponseEntity.ok("Order placed successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error placing order: " + e.getMessage());
+        }
     }
 
     @GetMapping("/getTotalItems")
@@ -73,3 +77,5 @@ public class CartController {
         return ResponseEntity.ok(totalItems);
     }
 }
+
+
